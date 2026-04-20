@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konbinezon Matcher</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 20px; background: #f4f4f9; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        input { width: 80%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; text-align: center; }
+        button { width: 85%; padding: 12px; background: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 10px; }
+        #result { margin-top: 20px; font-weight: bold; color: #333; padding: 15px; border-radius: 8px; min-height: 20px; }
+        .match { color: #28a745; background: #e8f5e9; border: 1px solid #28a745; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Konbinezon Matcher</h2>
+    <p style="font-size: 12px; color: #666;">Enter any base or its mirror</p>
+    <input type="number" id="b3" placeholder="Base 3 (e.g. 36)">
+    <input type="number" id="b4" placeholder="Base 4 (e.g. 39 or 93)">
+    <button onclick="findMatches()">Find Matches</button>
+    <div id="result"></div>
+</div>
+
+<script>
+const base_3 = {
+    "03": ["14", "92", "15", "84", "95", "82"],
+    "14": ["25", "03", "26", "95", "06", "93"],
+    "25": ["36", "14", "37", "06", "17", "04"],
+    "36": ["47", "25", "48", "17", "28", "15"],
+    "47": ["58", "36", "59", "28", "39", "26"],
+    "58": ["69", "47", "60", "39", "40", "37"],
+    "69": ["70", "58", "71", "40", "51", "48"],
+    "70": ["81", "69", "82", "51", "62", "59"],
+    "81": ["92", "70", "93", "62", "73", "70"],
+    "92": ["03", "81", "04", "73", "84", "81"]
+};
+
+const base_4 = {
+    "04": ["15", "93", "95", "96", "85", "25"],
+    "15": ["26", "04", "06", "07", "96", "36"],
+    "26": ["37", "15", "17", "18", "07", "47"],
+    "37": ["48", "26", "28", "29", "18", "58"],
+    "48": ["59", "37", "39", "30", "29", "69"],
+    "59": ["60", "48", "40", "41", "30", "70"],
+    "60": ["71", "59", "51", "52", "41", "81"],
+    "71": ["82", "60", "62", "63", "52", "92"],
+    "82": ["93", "71", "73", "74", "63", "03"],
+    "93": ["04", "82", "84", "85", "74", "14"]
+};
+
+function getMirror(val) {
+    if (val.length === 1) return "0" + val;
+    return val.split('').reverse().join('');
+}
+
+function findMatches() {
+    let b3In = document.getElementById('b3').value.padStart(2, '0');
+    let b4In = document.getElementById('b4').value.padStart(2, '0');
+    let display = document.getElementById('result');
+    
+    // Find valid keys for B3
+    let b3Key = base_3[b3In] ? b3In : (base_3[getMirror(b3In)] ? getMirror(b3In) : null);
+    
+    // Find valid keys for B4
+    let b4Key = base_4[b4In] ? b4In : (base_4[getMirror(b4In)] ? getMirror(b4In) : null);
+
+    if (b3Key && b4Key) {
+        let list1 = base_3[b3Key];
+        let list2 = base_4[b4Key];
+        let found = [];
+
+        list1.forEach(num => {
+            let m = getMirror(num);
+            if (list2.includes(num) || list2.includes(m)) {
+                found.push(num);
+            }
+        });
+
+        if (found.length > 0) {
+            display.innerHTML = "✅ Matches: " + [...new Set(found)].join(', ');
+            display.className = "match";
+        } else {
+            display.innerHTML = "❌ No matches found.";
+            display.className = "";
+        }
+    } else {
+        display.innerHTML = "⚠️ Base not found.";
+        display.className = "";
+    }
+}
+</script>
+
+</body>
+</html>
