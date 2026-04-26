@@ -2,98 +2,90 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Konbinezon v2</title>
+    <title>Orionyx Logic Matcher</title>
     <style>
-        body { font-family: -apple-system, sans-serif; padding: 20px; background: #f4f4f9; text-align: center; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
-        select, input { width: 85%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        button { width: 85%; padding: 15px; background: #007aff; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 15px; }
-        #result { margin-top: 20px; font-weight: bold; color: #333; padding: 15px; border-radius: 8px; min-height: 20px; white-space: pre-line; }
-        .match { color: #28a745; background: #e8f5e9; border: 1px solid #28a745; }
-        label { display: block; text-align: left; margin-left: 8%; font-size: 14px; color: #666; font-weight: bold; margin-top: 10px; }
+        body { font-family: -apple-system, sans-serif; padding: 20px; background: #1a1a2e; color: white; text-align: center; }
+        .card { background: #16213e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 450px; margin: auto; border: 1px solid #0f3460; }
+        select, input { width: 90%; padding: 12px; margin: 8px 0; border: 1px solid #0f3460; border-radius: 8px; font-size: 16px; background: #0f3460; color: white; box-sizing: border-box; }
+        button { width: 90%; padding: 15px; background: #e94560; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        #result-box { margin-top: 20px; text-align: left; background: #0f3460; padding: 15px; border-radius: 10px; display: none; }
+        .list-title { color: #e94560; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .number-line { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 5px; margin-bottom: 10px; font-family: monospace; word-spacing: 5px; }
+        .match-highlight { color: #4ee44e; font-size: 20px; font-weight: bold; text-align: center; margin-top: 10px; border-top: 1px solid #555; padding-top: 10px; }
+        label { display: block; text-align: left; margin-left: 5%; font-size: 13px; color: #aaa; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Master Konbinezon</h2>
+    <h2 style="color: #e94560;">Orionyx Master Matcher</h2>
     
     <label>First Base:</label>
     <select id="type1">
-        <option value="b1">Base 1</option>
-        <option value="b2">Base 2</option>
-        <option value="b3">Base 3</option>
-        <option value="b4">Base 4</option>
-        <option value="dbl">Double</option>
+        <option value="b1">Base 1</option><option value="b2">Base 2</option>
+        <option value="b3">Base 3</option><option value="b4">Base 4</option>
+        <option value="dbl">Double</option><option value="fdbl">Fake Double</option>
     </select>
     <input type="number" id="num1" placeholder="Enter Number">
 
     <label>Second Base:</label>
     <select id="type2">
-        <option value="b1">Base 1</option>
-        <option value="b2">Base 2</option>
-        <option value="b3">Base 3</option>
-        <option value="b4" selected>Base 4</option>
-        <option value="dbl">Double</option>
+        <option value="b1">Base 1</option><option value="b2">Base 2</option>
+        <option value="b3">Base 3</option><option value="b4" selected>Base 4</option>
+        <option value="dbl">Double</option><option value="fdbl">Fake Double</option>
     </select>
     <input type="number" id="num2" placeholder="Enter Number">
 
-    <button onclick="findMatches()">Check All Matches</button>
-    <div id="result"></div>
+    <button onclick="findMatches()">Compare Sequences</button>
+
+    <div id="result-box">
+        <div class="list-title" id="title1">Base 1 List:</div>
+        <div class="number-line" id="line1"></div>
+        <div class="list-title" id="title2">Base 2 List:</div>
+        <div class="number-line" id="line2"></div>
+        <div class="match-highlight" id="final-match"></div>
+    </div>
 </div>
 
 <script>
 const data = {
-    b1: {"01":["12","90","02","91"],"12":["23","01","13","02"],"23":["34","12","24","13"],"34":["45","23","35","24"],"45":["56","34","46","35"],"56":["67","45","57","46"],"67":["78","56","68","57"],"78":["89","67","79","68"],"89":["90","78","80","79"],"90":["01","89","91","80"]},
-    b2: {"02":["13","91","01","12"],"13":["24","02","12","23"],"24":["35","13","23","34"],"35":["46","24","34","45"],"46":["57","35","45","56"],"57":["68","46","56","67"],"68":["79","57","67","78"],"79":["80","68","78","89"],"80":["91","79","89","90"],"91":["02","80","90","01"]},
-    b3: {"03":["14","92","15","84","95","82"],"14":["25","03","26","95","06","93"],"25":["36","14","37","06","17","04"],"36":["47","25","48","17","28","15"],"47":["58","36","59","28","39","26"],"58":["69","47","60","39","40","37"],"69":["70","58","71","40","51","48"],"70":["81","69","82","51","62","59"],"81":["92","70","93","62","73","70"],"92":["03","81","04","73","84","81"]},
-    b4: {
-        "04":["15","93","95","96","85","25","92"],
-        "15":["26","04","06","07","96","36","03"],
-        "26":["37","15","17","18","07","47","14"],
-        "37":["48","26","28","29","18","58","25"],
-        "48":["59","37","39","30","29","69","36"],
-        "59":["60","48","40","41","30","70","47"],
-        "60":["71","59","51","52","41","81","48"],
-        "71":["82","60","62","63","52","92","59"],
-        "82":["93","71","73","74","63","03","70"],
-        "93":["04","82","84","85","74","14","81"]
-    },
-    dbl: {"00":["18","92","91","12","98"],"11":["29","03","02","23","09"],"22":["30","14","13","34","10"],"33":["41","25","24","45","21"],"44":["52","36","35","56","32"],"55":["63","47","46","67","43"],"66":["74","58","57","78","54"],"77":["85","69","68","89","65"],"88":["96","70","79","90","76"],"99":["07","81","80","01","87"]}
+    b1: {"01":["12","02","90","91","92","93","28"],"12":["23","13","01","02","03","04","39"],"23":["34","24","12","13","14","15","40"],"34":["45","35","23","24","25","26","51"],"45":["56","46","34","35","36","37","62"],"56":["67","57","45","46","47","48","73"],"67":["78","68","56","57","58","59","84"],"78":["89","79","67","68","69","60","95"],"89":["90","80","78","79","70","71","06"],"90":["01","91","89","80","81","82","17"]},
+    b2: {"02":["13","01","12","91","93"],"13":["24","12","23","02","04"],"24":["35","23","34","13","15"],"35":["46","34","45","24","26"],"46":["57","45","56","35","37"],"57":["68","56","67","46","48"],"68":["79","67","78","57","59"],"79":["80","78","89","68","60"],"80":["91","89","90","79","71"],"91":["02","90","01","80","82"]},
+    b3: {"03":["14","15","12","92","48"],"14":["25","26","23","03","59"],"25":["36","37","34","14","60"],"36":["47","48","45","25","71"],"47":["58","59","56","36","82"],"58":["69","60","67","47","93"],"69":["70","71","78","58","04"],"70":["81","82","89","69","15"],"81":["92","93","90","70","26"],"92":["03","04","01","81","37"]},
+    b4: {"04":["15","25","93","95","96","85"],"15":["26","36","04","06","07","96"],"26":["37","47","15","17","18","07"],"37":["48","58","26","28","29","18"],"48":["59","69","37","39","30","29"],"59":["60","70","48","40","41","30"],"60":["71","81","59","51","52","41"],"71":["82","92","60","62","63","52"],"82":["93","03","71","73","74","63"],"93":["04","14","82","84","85","74"]},
+    dbl: {"00":["18","92","12","91","98"],"11":["29","03","23","02","09"],"22":["30","14","34","13","10"],"33":["41","25","45","24","21"],"44":["52","36","56","35","32"],"55":["63","47","67","46","43"],"66":["74","58","78","57","54"],"77":["85","69","89","68","65"],"88":["96","70","90","79","76"],"99":["07","81","01","80","87"]},
+    fdbl: {"05":["17","26","93","84","96","14"],"16":["28","37","04","95","07","25"],"27":["39","48","15","06","18","36"],"38":["40","59","26","17","29","47"],"49":["51","60","37","28","30","58"]}
 };
 
 function getMirror(val) { return val.padStart(2, '0').split('').reverse().join(''); }
 
 function findMatches() {
-    let t1 = document.getElementById('type1').value;
-    let t2 = document.getElementById('type2').value;
+    let s1 = document.getElementById('type1');
+    let s2 = document.getElementById('type2');
     let n1 = document.getElementById('num1').value.padStart(2, '0');
     let n2 = document.getElementById('num2').value.padStart(2, '0');
-    let display = document.getElementById('result');
-
-    let key1 = data[t1][n1] ? n1 : (data[t1][getMirror(n1)] ? getMirror(n1) : null);
-    let key2 = data[t2][n2] ? n2 : (data[t2][getMirror(n2)] ? getMirror(n2) : null);
+    
+    let key1 = data[s1.value][n1] ? n1 : (data[s1.value][getMirror(n1)] ? getMirror(n1) : null);
+    let key2 = data[s2.value][n2] ? n2 : (data[s2.value][getMirror(n2)] ? getMirror(n2) : null);
 
     if (key1 && key2) {
-        let list1 = data[t1][key1];
-        let list2 = data[t2][key2];
+        let list1 = data[s1.value][key1];
+        let list2 = data[s2.value][key2];
         let found = [];
 
         list1.forEach(num => {
-            let m = getMirror(num);
-            if (list2.includes(num) || list2.includes(m)) { found.push(num); }
+            if (list2.includes(num) || list2.includes(getMirror(num))) { found.push(num); }
         });
 
-        if (found.length > 0) {
-            display.innerHTML = "✅ Matches Found:\n" + [...new Set(found)].join(', ');
-            display.className = "match";
-        } else {
-            display.innerHTML = "❌ No matches between these rows.";
-            display.className = "";
-        }
+        document.getElementById('result-box').style.display = "block";
+        document.getElementById('title1').innerText = s1.options[s1.selectedIndex].text + " (" + key1 + "):";
+        document.getElementById('line1').innerText = list1.join("  ");
+        document.getElementById('title2').innerText = s2.options[s2.selectedIndex].text + " (" + key2 + "):";
+        document.getElementById('line2').innerText = list2.join("  ");
+        
+        document.getElementById('final-match').innerText = found.length > 0 ? "COMMON: " + [...new Set(found)].join(", ") : "NO COMMON NUMBERS";
     } else {
-        display.innerHTML = "⚠️ Number not found in selected list.";
-        display.className = "";
+        alert("Number not found in selected Base.");
     }
 }
 </script>
