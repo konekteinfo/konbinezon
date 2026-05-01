@@ -1,104 +1,922 @@
 <!DOCTYPE html>
-<html>
+<html lang="ht">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orionyx Master Matcher</title>
-    <style>
-        body { font-family: -apple-system, sans-serif; padding: 20px; background: #1a1a2e; color: white; text-align: center; }
-        .card { background: #16213e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 450px; margin: auto; border: 1px solid #0f3460; }
-        select, input { width: 90%; padding: 12px; margin: 8px 0; border: 1px solid #0f3460; border-radius: 8px; font-size: 16px; background: #0f3460; color: white; box-sizing: border-box; }
-        button { width: 90%; padding: 15px; background: #e94560; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 15px; cursor: pointer; }
-        #result-box { margin-top: 20px; text-align: left; background: #0f3460; padding: 15px; border-radius: 10px; display: none; }
-        .list-title { color: #e94560; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        .number-line { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 5px; margin-bottom: 10px; font-family: monospace; word-spacing: 5px; }
-        .match-highlight { color: #4ee44e; font-size: 20px; font-weight: bold; text-align: center; margin-top: 10px; border-top: 1px solid #555; padding-top: 10px; }
-        label { display: block; text-align: left; margin-left: 5%; font-size: 13px; color: #aaa; margin-top: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konbinezon</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel: #12121a;
+    --border: #1e1e2e;
+    --gold: #f5c842;
+    --gold2: #e0a820;
+    --red: #e84040;
+    --teal: #30d5c8;
+    --white: #f0f0f0;
+    --muted: #555570;
+    --tag-bg: #1a1a28;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* Grid lines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245,200,66,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,200,66,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(56px, 12vw, 100px);
+    letter-spacing: 0.08em;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 50%, #c87000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 0.9;
+    text-shadow: none;
+    filter: drop-shadow(0 0 30px rgba(245,200,66,0.3));
+  }
+
+  .tagline {
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    margin-top: 10px;
+    text-transform: uppercase;
+  }
+
+  .divider {
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 16px auto 0;
+  }
+
+  /* Input zone */
+  .input-zone {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .input-zone::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .input-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .ball-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--white);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 0.1em;
+    text-align: center;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+  }
+
+  .ball-input::-webkit-inner-spin-button,
+  .ball-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .ball-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(245,200,66,0.1);
+  }
+
+  .ball-input::placeholder {
+    color: var(--muted);
+    font-size: 36px;
+  }
+
+  .search-btn {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 3px;
+    padding: 0 32px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .search-btn:hover { background: var(--gold2); }
+  .search-btn:active { transform: scale(0.97); }
+
+  /* Results */
+  .results {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .results.show { display: flex; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-accent {
+    width: 4px;
+    height: 28px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.2em;
+    flex: 1;
+  }
+
+  .card-boul {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--gold);
+  }
+
+  .card-body {
+    padding: 18px 20px;
+  }
+
+  /* Number balls */
+  .ball-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .ball {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.05em;
+    position: relative;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+
+  .ball:hover { transform: scale(1.1); }
+
+  .ball-normal {
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    color: var(--white);
+  }
+
+  .ball-match {
+    background: linear-gradient(135deg, var(--teal), #1aafa4);
+    border: 1px solid #30d5c8;
+    color: #000;
+    font-weight: 700;
+    box-shadow: 0 0 12px rgba(48,213,200,0.3);
+  }
+
+  .match-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--teal);
+    margin-top: 10px;
+    text-transform: uppercase;
+  }
+
+  /* Pair section color coding */
+  .c-pa3  .card-accent { background: var(--gold); }
+  .c-pa4  .card-accent { background: var(--teal); }
+  .c-pa5  .card-accent { background: #c878ff; }
+  .c-pe   .card-accent { background: var(--red); }
+
+  .c-pa3 .card-title  { color: var(--gold); }
+  .c-pa4 .card-title  { color: var(--teal); }
+  .c-pa5 .card-title  { color: #c878ff; }
+  .c-pe  .card-title  { color: var(--red); }
+
+  /* Error */
+  .error-msg {
+    text-align: center;
+    color: var(--red);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    display: none;
+    margin-top: 10px;
+  }
+
+  /* Subtitle chip */
+  .chip {
+    display: inline-block;
+    background: rgba(245,200,66,0.08);
+    border: 1px solid rgba(245,200,66,0.2);
+    border-radius: 2px;
+    padding: 2px 8px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  /* Compared input display */
+  .compare-label {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .compare-label strong {
+    color: var(--gold);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 48px 0 32px;
+  }
+  .section-divider .line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border));
+  }
+  .section-divider .line.right {
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+  .section-divider .label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ── COMPARE ZONE ── */
+  .compare-zone {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .compare-zone::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--teal), transparent);
+  }
+
+  .compare-inputs {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .vs-badge {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+  .compare-btn {
+    background: var(--teal);
+    color: #000;
+    border: none;
+    border-radius: 3px;
+    padding: 0 28px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .compare-btn:hover { background: #1aafa4; }
+  .compare-btn:active { transform: scale(0.97); }
+
+  /* Compare results */
+  .cmp-results {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeUp 0.4s ease;
+    margin-top: 0;
+  }
+  .cmp-results.show { display: flex; }
+
+  /* Two-column layout for the two balls */
+  .cmp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 560px) {
+    .cmp-grid { grid-template-columns: 1fr; }
+  }
+
+  .cmp-col {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .cmp-col-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cmp-col-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    flex: 1;
+  }
+  .cmp-col-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--gold);
+  }
+  .cmp-col-body {
+    padding: 14px 16px;
+  }
+
+  /* Common numbers card */
+  .common-card {
+    background: #0d1f1e;
+    border: 1px solid var(--teal);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .common-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--teal), transparent);
+  }
+  .common-card-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(48,213,200,0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .common-card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.25em;
+    color: var(--teal);
+    flex: 1;
+  }
+  .common-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--teal);
+  }
+  .common-card-body {
+    padding: 18px 20px;
+  }
+  .no-common {
+    text-align: center;
+    padding: 24px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+  }
+
+  /* Category tag on ball */
+  .ball-wrap {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .ball-cat {
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1;
+  }
+
+  .ball-common {
+    background: linear-gradient(135deg, var(--teal), #1aafa4);
+    border: 1px solid #30d5c8;
+    color: #000;
+    font-weight: 700;
+    box-shadow: 0 0 14px rgba(48,213,200,0.4);
+  }
+  .ball-dim {
+    opacity: 0.35;
+  }
+
+  .cmp-err {
+    color: var(--red);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    display: none;
+    margin-top: 10px;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    margin-top: 60px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: #333348;
+    text-transform: uppercase;
+  }
+</style>
 </head>
 <body>
+<div class="wrap">
 
-<div class="card">
-    <h2 style="color: #e94560;">Orionyx Master Matcher</h2>
-    
-    <label>First Base:</label>
-    <select id="type1">
-        <option value="b1">Base 1</option><option value="b2">Base 2</option>
-        <option value="b3">Base 3</option><option value="b4">Base 4</option>
-        <option value="dbl">Double</option><option value="fdbl">Fake Double</option>
-    </select>
-    <input type="number" id="num1" placeholder="Enter Number">
+  <header>
+    <div class="logo">Konbinezon</div>
+    <div class="tagline">Boul · Analiz · Konparezon</div>
+    <div class="divider"></div>
+  </header>
 
-    <label>Second Base:</label>
-    <select id="type2">
-        <option value="b1">Base 1</option><option value="b2">Base 2</option>
-        <option value="b3" selected>Base 3</option><option value="b4">Base 4</option>
-        <option value="dbl">Double</option><option value="fdbl">Fake Double</option>
-    </select>
-    <input type="number" id="num2" placeholder="Enter Number">
-
-    <button onclick="findMatches()">Compare Sequences</button>
-
-    <div id="result-box">
-        <div class="list-title" id="title1">List 1:</div>
-        <div class="number-line" id="line1"></div>
-        <div class="list-title" id="title2">List 2:</div>
-        <div class="number-line" id="line2"></div>
-        <div class="match-highlight" id="final-match"></div>
+  <div class="input-zone">
+    <div class="input-label">⬤ &nbsp;Antre yon nimewo boul (00–99)</div>
+    <div class="input-row">
+      <input class="ball-input" id="ballInput" type="number" min="0" max="99" placeholder="03" maxlength="2">
+      <button class="search-btn" onclick="lookup()">CHÈCHE</button>
     </div>
+    <div class="error-msg" id="errMsg">⚠ Antre yon nimewo valid ant 00 ak 99</div>
+  </div>
+
+  <div class="compare-label" id="compareLabel" style="display:none">
+    Rezilta pou boul: <strong id="displayBoul"></strong>
+  </div>
+
+  <div class="results" id="results"></div>
+
+  <!-- SECTION DIVIDER -->
+  <div class="section-divider">
+    <div class="line"></div>
+    <div class="label">◈ &nbsp;Konpare 2 Boul&nbsp; ◈</div>
+    <div class="line right"></div>
+  </div>
+
+  <!-- COMPARE ZONE -->
+  <div class="compare-zone">
+    <div class="input-label" style="color:var(--teal)">⬤ &nbsp;Antre 2 boul pou konpare (00–99)</div>
+    <div class="compare-inputs">
+      <input class="ball-input" id="cmpA" type="number" min="0" max="99" placeholder="06" maxlength="2">
+      <div class="vs-badge">VS</div>
+      <input class="ball-input" id="cmpB" type="number" min="0" max="99" placeholder="61" maxlength="2">
+      <button class="compare-btn" onclick="compare()">KONPARE</button>
+    </div>
+    <div class="cmp-err" id="cmpErr">⚠ Antre 2 nimewo valid ant 00 ak 99</div>
+  </div>
+
+  <div class="cmp-results" id="cmpResults"></div>
+
+  <footer>Konbinezon · Sistèm Analiz Lotri</footer>
 </div>
 
 <script>
-const data = {
-    b1: {"01":["12","02","90","91","92","93","28"],"12":["23","13","01","02","03","04","39"],"23":["34","24","12","13","14","15","40"],"34":["45","35","23","24","25","26","51"],"45":["56","46","34","35","36","37","62"],"56":["67","57","45","46","47","48","73"],"67":["78","68","56","57","58","59","84"],"78":["89","79","67","68","69","60","95"],"89":["90","80","78","79","70","71","06"],"90":["01","91","89","80","81","82","17"]},
-    b2: {"02":["13","01","12","91","93"],"13":["24","12","23","02","04"],"24":["35","23","34","13","15"],"35":["46","34","45","24","26"],"46":["57","45","56","35","37"],"57":["68","56","67","46","48"],"68":["79","67","78","57","59"],"79":["80","78","89","68","60"],"80":["91","89","90","79","71"],"91":["02","90","01","80","82"]},
-    b3: {
-        "03":["14","15","12","92","48","28"],
-        "14":["25","26","23","03","59","39"],
-        "25":["36","37","34","14","60","40"],
-        "36":["47","48","45","25","71","51"],
-        "47":["58","59","56","36","82","62"],
-        "58":["69","60","67","47","93","73"],
-        "69":["70","71","78","58","04","84"],
-        "70":["81","82","89","69","15","95"],
-        "81":["92","93","90","70","26","06"],
-        "92":["03","04","01","81","37","17"]
-    },
-    b4: {"04":["15","25","93","95","96","85"],"15":["26","36","04","06","07","96"],"26":["37","47","15","17","18","07"],"37":["48","58","26","28","29","18"],"48":["59","69","37","39","30","29"],"59":["60","70","48","40","41","30"],"60":["71","81","59","51","52","41"],"71":["82","92","60","62","63","52"],"82":["93","03","71","73","74","63"],"93":["04","14","82","84","85","74"]},
-    dbl: {"00":["18","92","12","91","98"],"11":["29","03","23","02","09"],"22":["30","14","34","13","10"],"33":["41","25","45","24","21"],"44":["52","36","56","35","32"],"55":["63","47","67","46","43"],"66":["74","58","78","57","54"],"77":["85","69","89","68","65"],"88":["96","70","90","79","76"],"99":["07","81","01","80","87"]},
-    fdbl: {"05":["17","26","93","84","96","14"],"16":["28","37","04","95","07","25"],"27":["39","48","15","06","18","36"],"38":["40","59","26","17","29","47"],"49":["51","60","37","28","30","58"]}
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const PA3 = {
+  '03': [14,15,92,95,84,82,94],
+  '14': [25,26,3,6,95,93,5],
+  '25': [36,37,14,17,6,4,16],
+  '36': [47,48,25,28,17,15,27],
+  '47': [58,59,36,39,28,26,38],
+  '58': [69,60,47,49,39,37,49],
+  '69': [70,71,58,51,40,48,50],
+  '70': [81,82,69,62,51,59,61],
+  '81': [92,93,70,73,62,60,72],
+  '92': [3,4,81,84,73,71,83],
 };
 
-function getMirror(val) { return val.padStart(2, '0').split('').reverse().join(''); }
+const PA4 = {
+  '04': [15,16,25,93,38,92,95],
+  '15': [26,27,36,4,49,3,6],
+  '26': [37,38,47,15,50,14,17],
+  '37': [48,49,58,26,61,25,28],
+  '48': [59,50,69,37,72,36,39],
+  '59': [60,61,70,48,83,47,40],
+  '60': [71,72,81,59,94,58,51],
+  '71': [82,83,92,60,5,69,62],
+  '82': [93,94,3,71,16,70,73],
+  '93': [4,5,14,82,27,81,84],
+};
 
-function findMatches() {
-    let s1 = document.getElementById('type1');
-    let s2 = document.getElementById('type2');
-    let n1 = document.getElementById('num1').value.padStart(2, '0');
-    let n2 = document.getElementById('num2').value.padStart(2, '0');
-    
-    let key1 = data[s1.value][n1] ? n1 : (data[s1.value][getMirror(n1)] ? getMirror(n1) : null);
-    let key2 = data[s2.value][n2] ? n2 : (data[s2.value][getMirror(n2)] ? getMirror(n2) : null);
+const PA5 = {
+  '05': [16,17,26,94,93,84],
+  '16': [27,28,37,50,4,95],
+  '27': [38,39,48,61,15,6],
+  '38': [49,40,59,72,26,17],
+  '49': [50,51,60,83,37,28],
+};
 
-    if (key1 && key2) {
-        let list1 = data[s1.value][key1];
-        let list2 = data[s2.value][key2];
-        let found = [];
+const PE = {
+  '00': [12,18,92,98,19],
+  '11': [23,29,3,9,20],
+  '22': [34,30,14,10,31],
+  '33': [45,41,25,21,42],
+  '44': [56,52,36,32,53],
+  '55': [67,63,47,43,64],
+  '66': [78,74,58,54,75],
+  '77': [89,85,69,65,86],
+  '88': [90,96,70,76,97],
+  '99': [1,7,81,87,8],
+};
 
-        list1.forEach(num => {
-            if (list2.includes(num) || list2.includes(getMirror(num))) { found.push(num); }
-        });
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
 
-        document.getElementById('result-box').style.display = "block";
-        document.getElementById('title1').innerText = s1.options[s1.selectedIndex].text + " (" + key1 + "):";
-        document.getElementById('line1').innerText = list1.join("  ");
-        document.getElementById('title2').innerText = s2.options[s2.selectedIndex].text + " (" + key2 + "):";
-        document.getElementById('line2').innerText = list2.join("  ");
-        
-        document.getElementById('final-match').innerText = found.length > 0 ? "COMMON: " + [...new Set(found)].join(", ") : "NO COMMON NUMBERS";
-    } else {
-        alert("Number not found in selected list.");
-    }
+// Normalize: treat 03 and 30 as same — always store as canonical (smaller digit first if swapped)
+// But actually we need to match against the table keys.
+// Strategy: for any input n, also try the mirror (swap digits).
+// Then check both against each table's keys.
+
+function pad2(n) {
+  return String(n).padStart(2, '0');
 }
+
+function mirror(s) {
+  // swap digits: "03" -> "30", "30" -> "03"
+  return s[1] + s[0];
+}
+
+// Find the matching key in a data object for an input string
+// Returns { key, isMirror } or null
+function findKey(data, input) {
+  const m = mirror(input);
+  const candidates = [input, m];
+  for (const c of candidates) {
+    if (data[c] !== undefined) return { key: c, isMirror: c !== input };
+  }
+  return null;
+}
+
+function fmt(n) {
+  return pad2(n);
+}
+
+// ─────────────────────────────────────────────
+// CROSS-MATCH: find which numbers appear in multiple categories
+// ─────────────────────────────────────────────
+function getCrossMatches(sets) {
+  // sets = array of arrays of normalized numbers (strings)
+  // count frequency
+  const freq = {};
+  sets.forEach(s => {
+    s.forEach(n => {
+      freq[n] = (freq[n] || 0) + 1;
+    });
+  });
+  const matches = new Set();
+  Object.entries(freq).forEach(([k, v]) => { if (v > 1) matches.add(k); });
+  return matches;
+}
+
+// ─────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────
+function renderCard(cssClass, title, boul, numbers, crossSet) {
+  if (!numbers) return '';
+  const balls = numbers.map(n => {
+    const s = fmt(n);
+    const isCross = crossSet && crossSet.has(s);
+    return `<div class="ball ${isCross ? 'ball-match' : 'ball-normal'}" title="${s}">${s}</div>`;
+  }).join('');
+
+  const matchCount = numbers.filter(n => crossSet && crossSet.has(fmt(n))).length;
+  const matchNote = matchCount > 0
+    ? `<div class="match-label">▲ ${matchCount} nimewo yo parèt nan plizyè kategori</div>`
+    : '';
+
+  return `
+    <div class="result-card ${cssClass}">
+      <div class="card-header">
+        <div class="card-accent"></div>
+        <div class="card-title">${title}</div>
+        <div class="card-boul">${boul}</div>
+      </div>
+      <div class="card-body">
+        <div class="ball-grid">${balls}</div>
+        ${matchNote}
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────
+// MAIN LOOKUP
+// ─────────────────────────────────────────────
+function lookup() {
+  const raw = document.getElementById('ballInput').value.trim();
+  const err = document.getElementById('errMsg');
+  const resultsDiv = document.getElementById('results');
+  const compareLabel = document.getElementById('compareLabel');
+  const displayBoul = document.getElementById('displayBoul');
+
+  err.style.display = 'none';
+  resultsDiv.classList.remove('show');
+  resultsDiv.innerHTML = '';
+  compareLabel.style.display = 'none';
+
+  if (raw === '' || isNaN(raw) || Number(raw) < 0 || Number(raw) > 99) {
+    err.style.display = 'block';
+    return;
+  }
+
+  const input = pad2(parseInt(raw, 10));
+
+  // Find in each table
+  const r3  = findKey(PA3, input);
+  const r4  = findKey(PA4, input);
+  const r5  = findKey(PA5, input);
+  const rPe = findKey(PE, input);
+
+  // Collect all results as normalized string arrays
+  const sets = [];
+  if (r3)  sets.push(PA3[r3.key].map(n => fmt(n)));
+  if (r4)  sets.push(PA4[r4.key].map(n => fmt(n)));
+  if (r5)  sets.push(PA5[r5.key].map(n => fmt(n)));
+  if (rPe) sets.push(PE[rPe.key].map(n => fmt(n)));
+
+  const crossMatches = getCrossMatches(sets);
+
+  let html = '';
+
+  if (r3) {
+    const keyLabel = r3.isMirror ? `${r3.key} <span style="font-size:12px;color:var(--muted)">← mirwa</span>` : r3.key;
+    html += renderCard('c-pa3', 'Boul Ki Separe Pa 3', r3.key, PA3[r3.key], crossMatches);
+  }
+  if (r4) {
+    html += renderCard('c-pa4', 'Boul Ki Separe Pa 4', r4.key, PA4[r4.key], crossMatches);
+  }
+  if (r5) {
+    html += renderCard('c-pa5', 'Boul Ki Separe Pa 5', r5.key, PA5[r5.key], crossMatches);
+  }
+  if (rPe) {
+    html += renderCard('c-pe', 'Boul Pè', rPe.key, PE[rPe.key], crossMatches);
+  }
+
+  if (!html) {
+    html = `<div style="text-align:center;padding:40px;color:var(--muted);letter-spacing:0.2em;font-size:13px;">
+      Boul <strong style="color:var(--white)">${input}</strong> pa nan okenn kategori.
+    </div>`;
+  }
+
+  // Show mirror note if applicable
+  const mirrorNotes = [];
+  if (r3 && r3.isMirror)  mirrorNotes.push(`Pa3 → ${r3.key}`);
+  if (r4 && r4.isMirror)  mirrorNotes.push(`Pa4 → ${r4.key}`);
+  if (r5 && r5.isMirror)  mirrorNotes.push(`Pa5 → ${r5.key}`);
+  if (rPe && rPe.isMirror) mirrorNotes.push(`Pè → ${rPe.key}`);
+
+  let mirrorNote = '';
+  if (mirrorNotes.length) {
+    mirrorNote = `<div style="text-align:center;font-size:10px;letter-spacing:0.2em;color:var(--muted);margin-bottom:12px;">
+      Mirwa detekte · ${mirrorNotes.join(' · ')}
+    </div>`;
+  }
+
+  displayBoul.textContent = input;
+  compareLabel.style.display = 'block';
+  resultsDiv.innerHTML = mirrorNote + html;
+  resultsDiv.classList.add('show');
+}
+
+// Enter key support
+document.getElementById('ballInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') lookup();
+});
+
+// Limit to 2 digits
+document.getElementById('ballInput').addEventListener('input', function() {
+  if (this.value.length > 2) this.value = this.value.slice(0, 2);
+});
 </script>
 </body>
 </html>
+<script>
+// ─────────────────────────────────────────────
+// COMPARE SECTION
+// ─────────────────────────────────────────────
+
+function getAllForBoul(input) {
+  const byTable = {};
+  const all = new Set();
+  const tables = [
+    { key: 'pa3', data: PA3 },
+    { key: 'pa4', data: PA4 },
+    { key: 'pa5', data: PA5 },
+    { key: 'pe',  data: PE  },
+  ];
+  tables.forEach(({ key, data }) => {
+    const r = findKey(data, input);
+    if (r) {
+      const nums = data[r.key].map(n => fmt(n));
+      byTable[key] = { matchedKey: r.key, isMirror: r.isMirror, nums };
+      nums.forEach(n => { all.add(n); all.add(mirror(n)); });
+    }
+  });
+  return { byTable, all };
+}
+
+function compare() {
+  const rawA = document.getElementById('cmpA').value.trim();
+  const rawB = document.getElementById('cmpB').value.trim();
+  const err = document.getElementById('cmpErr');
+  const out  = document.getElementById('cmpResults');
+
+  err.style.display = 'none';
+  out.classList.remove('show');
+  out.innerHTML = '';
+
+  const validA = rawA !== '' && !isNaN(rawA) && Number(rawA) >= 0 && Number(rawA) <= 99;
+  const validB = rawB !== '' && !isNaN(rawB) && Number(rawB) >= 0 && Number(rawB) <= 99;
+
+  if (!validA || !validB) { err.style.display = 'block'; return; }
+
+  const inA = pad2(parseInt(rawA, 10));
+  const inB = pad2(parseInt(rawB, 10));
+
+  const resA = getAllForBoul(inA);
+  const resB = getAllForBoul(inB);
+
+  // A number is common if it OR its mirror appears in both balls' result sets
+  const commonSet = new Set();
+  resA.all.forEach(n => {
+    if (resB.all.has(n) || resB.all.has(mirror(n))) {
+      const canon = [n, mirror(n)].sort()[0];
+      commonSet.add(canon);
+    }
+  });
+
+  const commonList = Array.from(commonSet).sort();
+  const LABELS = { pa3: 'Pa 3', pa4: 'Pa 4', pa5: 'Pa 5', pe: 'Pè' };
+
+  function renderSide(input, res) {
+    const rows = Object.entries(res.byTable).map(([k, v]) => {
+      const ballsHtml = v.nums.map(n => {
+        const canon = [n, mirror(n)].sort()[0];
+        const isCommon = commonSet.has(canon);
+        return `<div class="ball ${isCommon ? 'ball-common' : 'ball-normal ball-dim'}">${n}</div>`;
+      }).join('');
+      const mirrorNote = v.isMirror ? `<span style="font-size:9px;color:var(--muted);letter-spacing:0.15em"> ← mirwa ${v.matchedKey}</span>` : '';
+      return `<div style="margin-bottom:14px">
+        <div style="font-size:10px;letter-spacing:0.25em;color:var(--muted);margin-bottom:6px">${LABELS[k]}${mirrorNote}</div>
+        <div class="ball-grid">${ballsHtml}</div>
+      </div>`;
+    }).join('');
+    const empty = Object.keys(res.byTable).length === 0
+      ? `<div style="color:var(--muted);font-size:11px;letter-spacing:0.2em;padding:10px 0">Pa nan okenn kategori</div>` : '';
+    return `<div class="cmp-col">
+      <div class="cmp-col-header">
+        <div class="cmp-col-title">Boul</div>
+        <div class="cmp-col-num">${input}</div>
+      </div>
+      <div class="cmp-col-body">${rows}${empty}</div>
+    </div>`;
+  }
+
+  let commonHtml;
+  if (commonList.length === 0) {
+    commonHtml = `<div class="no-common">Okenn nimewo an komen ant <strong style="color:var(--white)">${inA}</strong> ak <strong style="color:var(--white)">${inB}</strong></div>`;
+  } else {
+    const balls = commonList.map(n => {
+      const m = mirror(n);
+      const hint = m !== n ? ` / ${m}` : '';
+      return `<div class="ball ball-common" title="${n}${hint}">${n}</div>`;
+    }).join('');
+    commonHtml = `<div class="ball-grid">${balls}</div>
+      <div style="font-size:9px;letter-spacing:0.2em;color:var(--teal);margin-top:12px">
+        ▲ Nimewo yo enkli mirwa yo · ${inA} VS ${inB}
+      </div>`;
+  }
+
+  out.innerHTML = `
+    <div class="cmp-grid">${renderSide(inA, resA)}${renderSide(inB, resB)}</div>
+    <div class="common-card">
+      <div class="common-card-header">
+        <div class="common-card-title">◈ Nimewo An Komen</div>
+        <div class="common-count">${commonList.length}</div>
+      </div>
+      <div class="common-card-body">${commonHtml}</div>
+    </div>`;
+  out.classList.add('show');
+}
+
+['cmpA','cmpB'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') compare(); });
+  document.getElementById(id).addEventListener('input', function() { if (this.value.length > 2) this.value = this.value.slice(0,2); });
+});
+</script>
